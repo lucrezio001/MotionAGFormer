@@ -276,7 +276,7 @@ class MPI3DHP(Dataset):
           
     
 class MotionDataset3D(Dataset):
-    def __init__(self, args, subset_list, data_split, return_stats=False):
+    def __init__(self, args, subset_list, data_split, fixed_confidence=None, runif_confidence = False, return_stats=False):
         """
         :param args: Arguments from the config file
         :param subset_list: A list of datasets
@@ -288,7 +288,9 @@ class MotionDataset3D(Dataset):
         self.subset_list = subset_list
         self.data_split = data_split
         self.return_stats = return_stats
-
+        self.fixed_confidence = fixed_confidence
+        self.runif_confidence = runif_confidence
+        
         self.flip = args.flip
         self.use_proj_as_2d = args.use_proj_as_2d
 
@@ -332,6 +334,12 @@ class MotionDataset3D(Dataset):
 
             motion_3d = motion_3d[:-1]
 
+        if self.fixed_confidence != None:
+            motion_2d[:, :, 2] = self.fixed_confidence
+        
+        if self.runif_confidence and self.fixed_confidence == None:
+            motion_2d[:, :, 2] = np.random.uniform(0.8,1)
+        
         if self.data_split == 'train':
             if self.flip and random.random() > 0.5:
                 motion_2d = flip_data(motion_2d)

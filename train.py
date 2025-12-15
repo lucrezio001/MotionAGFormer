@@ -26,6 +26,9 @@ from utils.learning import load_model, AverageMeter, decay_lr_exponentially
 from utils.tools import count_param_numbers
 from utils.data import Augmenter2D
 
+import warnings
+warnings.filterwarnings("ignore")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -42,6 +45,10 @@ def parse_args():
     parser.add_argument('--wandb-run-id', default=None, type=str)
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--eval-only', action='store_true')
+    parser.add_argument('--fixed-conf', default=None, type=float)
+    parser.add_argument('--runif-conf', action='store_true', default=False,
+    help='Use random uniform as confidence values')
+
     opts = parser.parse_args()
     return opts
 
@@ -231,13 +238,19 @@ def save_checkpoint(checkpoint_path, epoch, lr, optimizer, model, min_mpjpe, wan
         'wandb_id': wandb_id,
     }, checkpoint_path)
 
+def remove_module_prefix(state_dict):
+    new_state_dict = {}
+    for k, v in state_dict.items():
+        new_key = k.replace("module.", "") if k.startswith("module.") else k
+        new_state_dict[new_key] = v
+    return new_state_dict
 
 def train(args, opts):
     print_args(args)
     create_directory_if_not_exists(opts.new_checkpoint)
 
-    train_dataset = MotionDataset3D(args, args.subset_list, 'train')
-    test_dataset = MotionDataset3D(args, args.subset_list, 'test')
+    train_dataset = MotionDataset3D(args, args.subset_list, 'train', opts.fixed_conf, opts.runif_conf)
+    test_dataset = MotionDataset3D(args, args.subset_list, 'test', opts.fixed_conf, opts.runif_conf)
 
     common_loader_params = {
         'batch_size': args.batch_size,
@@ -274,9 +287,13 @@ def train(args, opts):
     if opts.checkpoint:
         checkpoint_path = os.path.join(opts.checkpoint, opts.checkpoint_file if opts.checkpoint_file else "latest_epoch.pth.tr")
         if os.path.exists(checkpoint_path):
-            checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
-            model.load_state_dict(checkpoint['model'], strict=True)
-
+            checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage, weights_only=False)
+            # model.load_state_dict(checkpoint['model'], strict=True)
+            
+            orig_state = checkpoint["model"]  # or checkpoint if saved directly
+            clean_state = remove_module_prefix(orig_state)
+            model.load_state_dict(clean_state, strict=True)
+            
             if opts.resume:
                 lr = checkpoint['lr']
                 epoch_start = checkpoint['epoch']

@@ -28,15 +28,10 @@ def run_confidence_experiment(confidence_value):
     
     output_file = f"results/h36m/confidence_{confidence_value}.txt"
     
-    # Env python path
-    env = os.environ.copy()
-    env["PYTHONPATH"] = os.getcwd() + os.pathsep + env.get("PYTHONPATH", "")
-    env["CUDA_VISIBLE_DEVICES"] = "0"  # Force single GPU
-
     try:
         with open(output_file, "w") as f:
             result = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, 
-                                  text=True, timeout=1800, env=env)
+                                  text=True, timeout=1800)
         
         if result.returncode == 0:
             print(f"✓ Confidence {confidence_value} SUCCESS")

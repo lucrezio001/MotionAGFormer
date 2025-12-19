@@ -9,7 +9,7 @@ import re
 def run_confidence_experiment(confidence_value):
     """Run single experiment with given confidence value"""
     
-    os.makedirs("results", exist_ok=True)
+    os.makedirs("results/3dhp", exist_ok=True)
     
     # Use the same Python executable that's running this script
     python_exe = sys.executable
@@ -18,26 +18,35 @@ def run_confidence_experiment(confidence_value):
         python_exe, "-W", "ignore", "train.py",
         "--eval-only",
         "--checkpoint", "checkpoint", 
-        "--checkpoint-file", "motionagformer-xs-h36m.pth.tr",
-        "--config", "configs/h36m/MotionAGFormer-xsmall.yaml",
+        "--checkpoint-file", "motionagformer-xs-mpi.pth.tr",
+        "--config", "configs/mpi/MotionAGFormer-xsmall.yaml",
         "--fixed-conf", str(confidence_value)
     ]
     
     print(f"Using Python: {python_exe}")
     print(f"Running confidence {confidence_value}...")
     
-    output_file = f"results/confidence_{confidence_value}.txt"
+    output_file = f"results/3dhp/confidence_{confidence_value}.txt"
+    
+    # Env python path
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.getcwd() + os.pathsep + env.get("PYTHONPATH", "")
+    env["CUDA_VISIBLE_DEVICES"] = "0"  # Force single GPU to avoid DataParallel mismatch
     
     try:
         with open(output_file, "w") as f:
             result = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, 
-                                  text=True, timeout=1800)
+                                  text=True, timeout=1800, env=env)
         
         if result.returncode == 0:
             print(f"✓ Confidence {confidence_value} SUCCESS")
             return True
         else:
             print(f"✗ Confidence {confidence_value} FAILED")
+            print("!" * 20 + " ERROR LOG " + "!" * 20)
+            with open(output_file, "r") as f:
+                print(f.read())
+            print("!" * 51)
             return False
             
     except Exception as e:
@@ -49,7 +58,7 @@ def create_summary():
     
     confidence_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5]
     
-    with open("results/summary.txt", "w") as summary:
+    with open("results/3dhp/summary.txt", "w") as summary:
         summary.write("CONFIDENCE EXPERIMENTS SUMMARY\n")
         summary.write("=" * 60 + "\n\n")
         summary.write(f"Date: {datetime.now()}\n\n")
@@ -57,7 +66,7 @@ def create_summary():
         results = []
         
         for conf in confidence_values:
-            filename = f"results/confidence_{conf}.txt"
+            filename = f"results/3dhp/confidence_{conf}.txt"
             if os.path.exists(filename):
                 with open(filename, "r") as f:
                     content = f.read()
@@ -88,7 +97,7 @@ def create_summary():
             summary.write(f"BEST:  Confidence {best[0]} -> MPJPE {best[1]:.2f}\n")
             summary.write(f"WORST: Confidence {worst[0]} -> MPJPE {worst[1]:.2f}\n")
     
-    print("Summary created: results/summary.txt")
+    print("Summary created: results/3dhp/summary.txt")
 
 def main():
     confidence_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5]
@@ -103,7 +112,7 @@ def main():
     
     print(f"\nCompleted: {success}/{len(confidence_values)} successful")
     create_summary()
-    print("Check results/ directory for all outputs!")
+    print("Check results/3dhp directory for all outputs!")
 
 if __name__ == "__main__":
     main()

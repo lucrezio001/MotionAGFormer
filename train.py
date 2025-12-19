@@ -292,6 +292,17 @@ def train(args, opts):
             
             orig_state = checkpoint["model"]  # or checkpoint if saved directly
             clean_state = remove_module_prefix(orig_state)
+            
+            # parallel fix for multiple runs
+            if hasattr(model, 'module'):
+                new_state_dict = {}
+                for k, v in clean_state.items():
+                    if not k.startswith('module.'):
+                        new_state_dict['module.' + k] = v
+                    else:
+                        new_state_dict[k] = v
+                clean_state = new_state_dict
+            
             model.load_state_dict(clean_state, strict=True)
             
             if opts.resume:

@@ -20,7 +20,8 @@ from utils.learning import load_model, AverageMeter, decay_lr_exponentially
 from utils.tools import count_param_numbers
 from utils.utils_3dhp import *
 
-
+import warnings
+warnings.filterwarnings("ignore")
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -37,6 +38,10 @@ def parse_args():
     parser.add_argument('--wandb-run-id', default=None, type=str)
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--eval-only', action='store_true')
+    parser.add_argument('--fixed-conf', default=None, type=float)
+    parser.add_argument('--runif-conf', action='store_true', default=False,
+    help='Use random uniform as confidence values')
+    
     opts = parser.parse_args()
     return opts
 

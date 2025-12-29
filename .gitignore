@@ -6,3 +6,4 @@ checkpoint/*.pth.tr
 data/motion3d/*
 results/*
 data/mpi_inf_3dhp/*
+mpi-checkpoint/*

@@ -35,7 +35,6 @@ def plot_confidence_analysis():
     runif_p_mpjpe = 50.416696280520824
     runif_acceleration = 1.04457634818685
 
-    # Create figure with 3 subplots
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
     fig.suptitle('MotionAGFormer Performance for Fixed Confidence Values', fontsize=16, fontweight='bold')
 
@@ -52,7 +51,6 @@ def plot_confidence_analysis():
     axes[0].legend()
     axes[0].set_xlim(0.05, 1.55)
 
-    # Highlight optimal range for MPJPE
     optimal_idx_mpjpe = np.argmin(mpjpe)
     axes[0].plot(confidence[optimal_idx_mpjpe], mpjpe[optimal_idx_mpjpe], 
                 'go', markersize=10, markerfacecolor='lightgreen', markeredgecolor='green',
@@ -72,7 +70,6 @@ def plot_confidence_analysis():
     axes[1].legend()
     axes[1].set_xlim(0.05, 1.55)
 
-    # Highlight optimal range for P-MPJPE
     optimal_idx_pmpjpe = np.argmin(p_mpjpe)
     axes[1].plot(confidence[optimal_idx_pmpjpe], p_mpjpe[optimal_idx_pmpjpe], 
                 'go', markersize=10, markerfacecolor='lightgreen', markeredgecolor='green',
@@ -92,7 +89,6 @@ def plot_confidence_analysis():
     axes[2].legend()
     axes[2].set_xlim(0.05, 1.55)
 
-    # Highlight optimal range for Acceleration
     optimal_idx_acc = np.argmin(acceleration)
     axes[2].plot(confidence[optimal_idx_acc], acceleration[optimal_idx_acc], 
                 'go', markersize=10, markerfacecolor='lightgreen', markeredgecolor='green',
@@ -102,7 +98,7 @@ def plot_confidence_analysis():
     plt.tight_layout()
     plt.subplots_adjust(top=0.9)
 
-    # Save the plot
+    # Save plot
     plt.savefig('confidence_analysis.png', dpi=300, bbox_inches='tight')
     plt.savefig('confidence_analysis.pdf', bbox_inches='tight')
     print("Plots saved as 'confidence_analysis.png' and 'confidence_analysis.pdf'")
@@ -127,7 +123,6 @@ def print_analysis():
     default_p_mpjpe = 36.89
     default_acceleration = 0.841
 
-    # Find optimal values
     best_mpjpe_idx = np.argmin(mpjpe)
     best_p_mpjpe_idx = np.argmin(p_mpjpe) 
     best_acc_idx = np.argmin(acceleration)
@@ -187,13 +182,10 @@ def main():
     """Main function to run all analysis"""
     print("Generating confidence analysis plots...")
 
-    # Generate plots
     plot_confidence_analysis()
 
-    # Print analysis
     print_analysis()
 
-    # Create summary table
     create_summary_table()
 
     print("\nAnalysis complete! Check 'confidence_analysis.png' and 'confidence_analysis.pdf' for plots.")

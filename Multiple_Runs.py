@@ -6,9 +6,8 @@ import argparse
 import re
 from datetime import datetime
 
-# --- CONFIGURAZIONE DEFAULT ---
-# Qui definisci i default per ogni dataset. 
-# Se non passi argomenti da terminale, userà questi.
+# --- DEFAULT CONFIG ---
+
 DATASET_CONFIGS = {
     'h36m': {
         'script': 'train.py',
@@ -47,12 +46,11 @@ def run_experiment(dataset_name, script_path, config_path, ckpt_path, output_dir
     os.makedirs(output_dir, exist_ok=True)
     python_exe = sys.executable
     
-    # Costruzione comando
     cmd = [
         python_exe, "-W", "ignore", script_path,
         "--eval-only",
-        "--checkpoint", os.path.dirname(ckpt_path), # train.py vuole la cartella
-        "--checkpoint-file", os.path.basename(ckpt_path), # train.py vuole il nome file
+        "--checkpoint", os.path.dirname(ckpt_path), # train.py folder
+        "--checkpoint-file", os.path.basename(ckpt_path), # train.py file name
         "--config", config_path,
         "--fixed-conf", str(confidence_value)
     ]
@@ -61,7 +59,7 @@ def run_experiment(dataset_name, script_path, config_path, ckpt_path, output_dir
     
     output_file = os.path.join(output_dir, f"confidence_{confidence_value}.txt")
     
-    # Configurazione ambiente (Environment Variables)
+    # venv for uv
     env = os.environ.copy()
     env["PYTHONPATH"] = os.getcwd() + os.pathsep + env.get("PYTHONPATH", "")
     env["CUDA_VISIBLE_DEVICES"] = gpu_id
@@ -74,7 +72,7 @@ def run_experiment(dataset_name, script_path, config_path, ckpt_path, output_dir
             env=env
         )
         
-        # Scrive log completo
+        # log 
         with open(output_file, "w") as f:
             f.write(result.stdout)
             if result.stderr:
@@ -86,7 +84,6 @@ def run_experiment(dataset_name, script_path, config_path, ckpt_path, output_dir
             return True
         else:
             print(f"✗ Failed (Conf {confidence_value})")
-            # Stampa l'errore a video solo se fallisce
             if len(result.stderr) > 0:
                 print(f"Error snippet: {result.stderr[-300:]}") 
             return False
@@ -100,7 +97,6 @@ def extract_metrics(content, dataset_name):
     metrics = {}
     
     if dataset_name == 'h36m':
-        # Regex per Human3.6M
         mpjpe = re.search(r"Protocol #1 Error \(MPJPE\): ([0-9.]+)", content)
         p_mpjpe = re.search(r"Protocol #2 Error \(P-MPJPE\): ([0-9.]+)", content)
         acc = re.search(r"Acceleration error: ([0-9.]+)", content)
@@ -110,7 +106,6 @@ def extract_metrics(content, dataset_name):
         metrics['Acc'] = float(acc.group(1)) if acc else None
         
     elif dataset_name == '3dhp':
-        # Regex per MPI-INF-3DHP (Adatta queste regex all'output esatto del tuo train_3dhp.py)
         mpjpe = re.search(r"MPJPE: ([0-9.]+)", content)
         pck = re.search(r"PCK: ([0-9.]+)", content)
         auc = re.search(r"AUC: ([0-9.]+)", content)
@@ -139,7 +134,6 @@ def create_summary(dataset_name, output_dir, confidence_values):
                     
                 metrics = extract_metrics(content, dataset_name)
                 
-                # Formattazione riga in base al dataset
                 if dataset_name == 'h36m':
                     mpjpe = metrics.get('MPJPE')
                     p_mpjpe = metrics.get('P-MPJPE')
@@ -177,10 +171,10 @@ def create_summary(dataset_name, output_dir, confidence_values):
 def main():
     args = parse_args()
     
-    # Carica configurazione base
+    # load config
     cfg = DATASET_CONFIGS[args.dataset]
     
-    # Sovrascrivi se l'utente ha passato argomenti specifici
+    # new args 
     script_to_run = cfg['script']
     config_file = args.config if args.config else cfg['config']
     checkpoint_file = args.checkpoint if args.checkpoint else cfg['checkpoint']
@@ -194,7 +188,7 @@ def main():
     print(f"Output:     {output_directory}")
     print("-" * 30)
     
-    # Valori di confidence da testare
+    # list of confidence value to test
     confidence_values = [0.1]
     
     success_count = 0

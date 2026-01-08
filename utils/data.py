@@ -131,8 +131,20 @@ def split_clips(vid_list, n_frames, data_stride):
 
 def read_pkl(data_url):
     file = open(data_url, 'rb')
-    content = pickle.load(file)
-    file.close()
+    try:
+        content = pickle.load(file)
+    except ModuleNotFoundError as e:
+        # Fix for loading pickles created with NumPy 2.0 on NumPy < 2.0
+        if "numpy._core" in str(e) and hasattr(np, 'core'):
+            import sys
+            if "numpy._core" not in sys.modules:
+                sys.modules["numpy._core"] = np.core
+            file.seek(0)
+            content = pickle.load(file)
+        else:
+            raise e
+    finally:
+        file.close()
     return content
 
 

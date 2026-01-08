@@ -254,6 +254,11 @@ def train(args, opts):
             with torch.no_grad():
                 evaluate(model, test_loader, args.n_frames)
                 exit()
+                # _, data_inference = evaluate(model, test_loader, args.n_frames)
+                # # Save metric on evaluation
+                # save_data_inference(opts.new_checkpoint, data_inference, latest=True)
+                # print(f"Inference data saved to {os.path.join(opts.new_checkpoint, 'inference_data.mat')}")
+                # exit()
             
         print(f"[INFO] epoch {epoch}")
         loss_names = ['3d_pose', '3d_scale', '2d_proj', 'lg', 'lv', '3d_velocity', 'angle', 'angle_velocity', 'total']

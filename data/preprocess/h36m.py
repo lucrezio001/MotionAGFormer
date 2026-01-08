@@ -29,17 +29,22 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n-frames", type=int, default=243)
     parser.add_argument("--dt-root", type=str, default="../motion3d/")
+    parser.add_argument("--dt-file", type=str, default="h36m_sh_conf_cam_source_final.pkl")
+    parser.add_argument("--scpi", action="store_true", help="Add -SCPI suffix to root path")
     args = parser.parse_args()
     n_frames = args.n_frames
     dt_root = args.dt_root
+    dt_file = args.dt_file
 
     datareader = DataReaderH36M(n_frames=n_frames, sample_stride=1, data_stride_train=n_frames // 3,
-                                 data_stride_test=n_frames, dt_file='h36m_sh_conf_cam_source_final.pkl', dt_root=dt_root)
+                                 data_stride_test=n_frames, dt_file=dt_file, dt_root=dt_root)
     train_data, test_data, train_labels, test_labels = datareader.get_sliced_data()
     print(train_data.shape, test_data.shape)
     assert len(train_data) == len(train_labels)
     assert len(test_data) == len(test_labels)
     root_path = os.path.join(dt_root, f"H36M-{n_frames}")
+    if args.scpi:
+        root_path += "-SCPI"
     if not os.path.exists(root_path):
         os.makedirs(root_path)
     save_clips("train", root_path, train_data, train_labels)
